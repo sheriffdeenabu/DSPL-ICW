@@ -28,3 +28,47 @@ def load_data():
     df['Year'] = df['Year'].astype(str)
     return df
 
+df = load_data()
+
+def create_gauge_chart(value, title, min_val, max_val):
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=value,
+        title={'text': title},
+        gauge={
+            'axis': {'range': [min_val, max_val]},
+            'bar': {'color': "#1f77b4"},
+            'steps': [
+                {'range': [min_val, min_val + (max_val - min_val)*0.5], 'color': "lightgray"},
+                {'range': [min_val + (max_val - min_val)*0.5, max_val], 'color': "gray"}],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': min_val + (max_val - min_val)*0.8}
+        }
+    ))
+    fig.update_layout(height=300, margin=dict(t=50, b=10))
+    return fig
+
+def create_chart(data, chart_type, x=None, y=None, names=None, values=None, title=None, color=None):
+    if chart_type == 'line':
+        fig = px.line(data, x=x, y=y, title=title, color=color)
+    elif chart_type == 'bar':
+        fig = px.bar(data, x=x, y=y, title=title, color=color)
+    elif chart_type == 'scatter':
+        fig = px.scatter(data, x=x, y=y, title=title, color=color, trendline="lowess")
+    elif chart_type == 'pie':
+        fig = px.pie(data, names=names, values=values, title=title)
+    elif chart_type == 'area':
+        fig = px.area(data, x=x, y=y, title=title, color=color)
+    elif chart_type == 'box':
+        fig = px.box(data, x=x, y=y, title=title, color=color)
+    elif chart_type == 'histogram':
+        fig = px.histogram(data, x=x, title=title, color=color)
+    else:
+        raise ValueError("Unsupported chart type")
+    
+    if x == 'Year' or (isinstance(x, list) and 'Year' in x):
+        fig.update_xaxes(type='category')
+    return fig
+
