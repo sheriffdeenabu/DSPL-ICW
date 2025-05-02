@@ -267,3 +267,6 @@ else:
             fig = px.imshow(pivot_data, text_auto=True,
                           title="Indicator Correlations")
             st.plotly_chart(fig, use_container_width=True)
+
+st.markdown("---")
+st.caption("Developed for University of Westminster - Data Science Project Lifecycle")
