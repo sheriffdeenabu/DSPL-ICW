@@ -72,3 +72,53 @@ def create_chart(data, chart_type, x=None, y=None, names=None, values=None, titl
         fig.update_xaxes(type='category')
     return fig
 
+#sidebar navigation
+page = st.sidebar.radio("Navigation", ["Dashboard", "About", "Student Info"])
+
+if page == "About":
+    st.title("About the Sri Lanka Food Security Dashboard")
+    st.markdown("""
+    ### Dashboard Overview
+    
+    This interactive dashboard provides comprehensive insights into Sri Lanka's food security and related socioeconomic indicators. 
+    The visualization tool contains:
+    
+    - **Trend Analysis**: Customizable multi-indicator trends over time (select up to 3 indicators)
+    - **Advanced Analysis** with four specialized tabs:
+      1. **Food Security**: Undernourishment trends, gender disparities in food insecurity
+      2. **Economic**: GDP evolution, political stability correlations
+      3. **Health**: Obesity patterns, low birthweight statistics
+      4. **Progress Indicators**: Composite metrics with gauge charts and correlation matrices
+    
+    All visualizations are interactive with:
+    - Year range filtering (2009-2022)
+    - Multiple chart types (line, bar, pie, scatter, box, and gauge charts)
+    - Real-time metric displays
+    - Responsive design for all screen sizes
+    """)
+    
+elif page == "Student Info":
+    st.title("Student Information")
+    st.markdown("""
+    <div style='text-align: left;'>
+        <p style='font-size: 20px;'><b>Abdullah Sheriffdeen</b></p>
+        <p>Student ID: 20222221</p>
+        <p>Email: sheriffdeenabdullah@gmail.com | abdullah.20222221@iit.ac.lk</p>
+        <p>University of Westminster</p>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.title("🇱🇰 Sri Lanka Food Security Indicators")
+    
+    min_year, max_year = int(df['Year'].min()), int(df['Year'].max())
+    year_range = st.slider("Select Year Range", min_year, max_year, (min_year, max_year))
+    filtered_df = df[(df['Year'].astype(int) >= year_range[0]) & (df['Year'].astype(int) <= year_range[1])]
+    
+    st.subheader("Trend Analysis")
+    categories = st.multiselect(
+        "Select Indicators (Max 3)", 
+        filtered_df['Category'].unique(),
+        default=None,
+        max_selections=3
+    )
+
