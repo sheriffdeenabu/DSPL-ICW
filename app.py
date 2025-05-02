@@ -122,3 +122,26 @@ else:
         max_selections=3
     )
 
+    if categories:
+        fig = go.Figure()
+        for cat in categories:
+            cat_df = filtered_df[filtered_df['Category'] == cat]
+            fig.add_trace(go.Scatter(
+                x=cat_df['Year'], 
+                y=cat_df['Value'], 
+                name=cat,
+                mode='lines+markers'
+            ))
+        fig.update_layout(
+            xaxis_title='Year', 
+            yaxis_title='Value', 
+            height=500
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        cols = st.columns(len(categories))
+        for idx, cat in enumerate(categories):
+            latest = filtered_df[filtered_df['Category'] == cat].iloc[-1]
+            cols[idx].metric(cat, f"{float(latest['Value']):.1f} {latest['Unit']}")
+    else:
+        st.info("Select 1-3 indicators from the dropdown to visualize trends")
