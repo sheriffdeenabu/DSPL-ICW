@@ -145,3 +145,125 @@ else:
             cols[idx].metric(cat, f"{float(latest['Value']):.1f} {latest['Unit']}")
     else:
         st.info("Select 1-3 indicators from the dropdown to visualize trends")
+
+    st.subheader("Advanced Analysis")
+    tab1, tab2, tab3, tab4 = st.tabs(["Food Security", "Economic", "Health", "Progress Indicators"])
+    
+    with tab1:
+        st.write("### Food Security Indicators")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            data = filtered_df[filtered_df['Category'] == 'Undernourishment']
+            st.plotly_chart(create_chart(data, 'line', x='Year', y='Value', 
+                                       title="Undernourishment Over Time"), 
+                          use_container_width=True)
+            
+            data = filtered_df[filtered_df['Category'].isin(['Male Food Insecurity', 'Female Food Insecurity'])]
+            st.plotly_chart(create_chart(data, 'area', x='Year', y='Value', color='Category',
+                                       title="Food Insecurity by Gender"), 
+                          use_container_width=True)
+        
+        with col2:
+            data = filtered_df[filtered_df['Category'].isin(['Male Food Insecurity', 'Female Food Insecurity'])]
+            st.plotly_chart(create_chart(data, 'bar', x='Year', y='Value', color='Category',
+                                       title="Gender Comparison by Year"), 
+                          use_container_width=True)
+            
+            latest_data = data[data['Year'] == data['Year'].max()]
+            st.plotly_chart(create_chart(latest_data, 'pie', names='Category', values='Value',
+                                       title="Latest Gender Distribution"), 
+                          use_container_width=True)
+    
+    with tab2:
+        st.write("### Economic Indicators")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            data = filtered_df[filtered_df['Category'] == 'GDP per capita']
+            st.plotly_chart(create_chart(data, 'line', x='Year', y='Value', 
+                                       title="GDP per capita Over Time"), 
+                          use_container_width=True)
+            
+            st.plotly_chart(create_chart(data, 'histogram', x='Value',
+                                       title="GDP Value Distribution"), 
+                          use_container_width=True)
+        
+        with col2:
+            data = filtered_df[filtered_df['Category'] == 'Political Stability']
+            st.plotly_chart(create_chart(data, 'area', x='Year', y='Value',
+                                       title="Political Stability Trends"), 
+                          use_container_width=True)
+            
+            gdp = filtered_df[filtered_df['Category'] == 'GDP per capita']
+            stability = filtered_df[filtered_df['Category'] == 'Political Stability']
+            merged = pd.merge(gdp, stability, on='Year', suffixes=('_GDP', '_Stability'))
+            fig = px.scatter(merged, x='Value_GDP', y='Value_Stability',
+                           title="GDP vs Political Stability",
+                           trendline="lowess")
+            correlation = merged['Value_GDP'].corr(merged['Value_Stability'])
+            fig.add_annotation(text=f"Correlation: {correlation:.2f}", 
+                             xref="paper", yref="paper",
+                             x=0.05, y=0.95, showarrow=False)
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with tab3:
+        st.write("### Health Indicators")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            data = filtered_df[filtered_df['Category'] == 'Obesity']
+            st.plotly_chart(create_chart(data, 'line', x='Year', y='Value', 
+                                       title="Obesity Trends"), 
+                          use_container_width=True)
+            
+            obesity = filtered_df[filtered_df['Category'] == 'Obesity']
+            birthweight = filtered_df[filtered_df['Category'] == 'Low Birthweight']
+            merged = pd.merge(obesity, birthweight, on='Year')
+            st.plotly_chart(create_chart(merged, 'scatter', 
+                                       x='Value_x', y='Value_y',
+                                       title="Obesity vs Birthweight"), 
+                          use_container_width=True)
+        
+        with col2:
+            data = filtered_df[filtered_df['Category'] == 'Low Birthweight']
+            st.plotly_chart(create_chart(data, 'bar', x='Year', y='Value', 
+                                       title="Low Birthweight by Year"), 
+                          use_container_width=True)
+            
+            health_data = filtered_df[filtered_df['Category'].isin(['Obesity', 'Low Birthweight'])]
+            st.plotly_chart(create_chart(health_data, 'box', x='Category', y='Value',
+                                       title="Health Indicators Distribution"), 
+                          use_container_width=True)
+    
+    with tab4:
+        st.write("### Progress Indicators")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            latest_gdp = filtered_df[filtered_df['Category'] == 'GDP per capita'].iloc[-1]['Value']
+            st.plotly_chart(create_gauge_chart(
+                value=float(latest_gdp),
+                title="GDP Progress",
+                min_val=6000,
+                max_val=15000
+            ), use_container_width=True)
+            
+            indicators = ['Protein Supply', 'Basic Water Access', 'Political Stability']
+            area_data = filtered_df[filtered_df['Category'].isin(indicators)]
+            st.plotly_chart(create_chart(area_data, 'area', x='Year', y='Value', color='Category',
+                                       title="Composite Indicators"), 
+                          use_container_width=True)
+        
+        with col2:
+            water_data = filtered_df[filtered_df['Category'].isin(['Safe Water Access', 'Basic Water Access'])]
+            st.plotly_chart(create_chart(water_data, 'bar', x='Year', y='Value', color='Category',
+                                       title="Water Access Comparison"), 
+                          use_container_width=True)
+            
+            progress_data = filtered_df[filtered_df['Category'].isin(
+                ['Protein Supply', 'Basic Water Access', 'Political Stability', 'GDP per capita'])]
+            pivot_data = progress_data.pivot(index='Year', columns='Category', values='Value').corr()
+            fig = px.imshow(pivot_data, text_auto=True,
+                          title="Indicator Correlations")
+            st.plotly_chart(fig, use_container_width=True)
