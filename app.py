@@ -2,9 +2,20 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from PIL import Image
+import requests
+from io import BytesIO
 
 # Configuration
 st.set_page_config(page_title="Sri Lanka Food Security Dashboard", layout="wide")
+
+# Load Sri Lanka flag image
+def load_flag_image():
+    flag_url = "https://raw.githubusercontent.com/sheriffdeenabu/DSPL-ICW/main/Images/download.png"
+
+    response = requests.get(flag_url)
+    flag_image = Image.open(BytesIO(response.content))
+    return flag_image
 
 @st.cache_data
 def load_data():
@@ -28,13 +39,12 @@ def load_data():
     df['Year'] = df['Year'].astype(str)
     return df
 
-df = load_data()
-
 def create_gauge_chart(value, title, min_val, max_val):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=value,
         title={'text': title},
+        number={'suffix': "k" if min_val > 1000 else ""},
         gauge={
             'axis': {'range': [min_val, max_val]},
             'bar': {'color': "#1f77b4"},
@@ -47,7 +57,11 @@ def create_gauge_chart(value, title, min_val, max_val):
                 'value': min_val + (max_val - min_val)*0.8}
         }
     ))
-    fig.update_layout(height=300, margin=dict(t=50, b=10))
+    fig.update_layout(
+        height=300,
+        margin=dict(t=50, b=10),
+        autosize=True
+    )
     return fig
 
 def create_chart(data, chart_type, x=None, y=None, names=None, values=None, title=None, color=None):
@@ -72,7 +86,7 @@ def create_chart(data, chart_type, x=None, y=None, names=None, values=None, titl
         fig.update_xaxes(type='category')
     return fig
 
-#sidebar navigation
+# Sidebar navigation
 page = st.sidebar.radio("Navigation", ["Dashboard", "About", "Student Info"])
 
 if page == "About":
@@ -108,8 +122,15 @@ elif page == "Student Info":
     </div>
     """, unsafe_allow_html=True)
 else:
-    st.title("🇱🇰 Sri Lanka Food Security Indicators")
+    # Display Sri Lanka flag only on Dashboard page
+    flag = load_flag_image()
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        st.image(flag, width=300)  # Well-proportioned size (300px width)
+        st.markdown("<h1 style='text-align: center;'>Sri Lanka Food Security Indicators</h1>", unsafe_allow_html=True)
+    st.markdown("---")
     
+    df = load_data()
     min_year, max_year = int(df['Year'].min()), int(df['Year'].max())
     year_range = st.slider("Select Year Range", min_year, max_year, (min_year, max_year))
     filtered_df = df[(df['Year'].astype(int) >= year_range[0]) & (df['Year'].astype(int) <= year_range[1])]
@@ -185,9 +206,20 @@ else:
                                        title="GDP per capita Over Time"), 
                           use_container_width=True)
             
-            st.plotly_chart(create_chart(data, 'histogram', x='Value',
-                                       title="GDP Value Distribution"), 
-                          use_container_width=True)
+            data['Value'] = pd.to_numeric(data['Value'], errors='coerce')
+            gdp_growth = data['Value'].pct_change().mean() * 100
+            st.metric(
+                label="Average Annual GDP Growth Rate",
+                value=f"{gdp_growth:.2f}%",
+                help="Calculated as the mean percentage change in GDP per capita across all years"
+            )
+            
+            gdp_volatility = data['Value'].pct_change().std() * 100
+            st.metric(
+                label="GDP Growth Volatility",
+                value=f"{gdp_volatility:.2f}%",
+                help="Standard deviation of annual GDP growth rates"
+            )
         
         with col2:
             data = filtered_df[filtered_df['Category'] == 'Political Stability']
