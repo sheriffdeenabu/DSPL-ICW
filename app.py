@@ -8,8 +8,30 @@ import requests
 from io import BytesIO
 import base64
 
+
 # Configuring initial page
 st.set_page_config(page_title="Sri Lanka Food Security Dashboard", layout="wide")
+
+def set_dark_theme():
+    st.markdown("""
+    <style>
+        .stApp {
+            background-color: #0E1117;
+            color: #FAFAFA;
+        }
+        .css-18e3th9 {
+            background-color: #0E1117;
+        }
+        .css-1d391kg {
+            background-color: #0E1117;
+        }
+        .st-bh, .st-c2, .st-c3, .st-c4, .st-c5, .st-c6, .st-c7, .st-c8, .st-c9, .st-ca, .st-cb, .st-cc, .st-cd, .st-ce, .st-cf, .st-cg, .st-ch, .st-ci, .st-cj, .st-ck, .st-cl, .st-cm, .st-cn {
+            color: #FAFAFA;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+set_dark_theme()
 
 # Converting image to base64
 def image_to_base64(image):
@@ -69,10 +91,11 @@ def create_gauge_chart(value, title, min_val, max_val):
             mode="gauge+number",
             value=numeric_value,
             title={'text': title},
+            domain={'x': [0, 1], 'y': [0, 1]},  # Full width and height of plot area
             number={
                 'valueformat': ",.0f",
                 'suffix': "",
-                'font': {'size': 24}    
+                'font': {'size': 28},
             },
             gauge={
                 'axis': {
@@ -95,6 +118,7 @@ def create_gauge_chart(value, title, min_val, max_val):
             autosize=True
         )
         return fig
+
 
 def create_chart(data, chart_type, x=None, y=None, names=None, values=None, title=None, color=None):
     with st.spinner(f'Creating {chart_type} chart: {title or ""}'):
@@ -128,6 +152,17 @@ def show_dataset_info(df):
     """)
     
     st.markdown("### Dataset Summary")
+    
+    # Add download button
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download dataset as CSV",
+        data=csv,
+        file_name='sri_lanka_food_security_indicators.csv',
+        mime='text/csv',
+        help="Click to download the full dataset in CSV format"
+    )
+    
     st.dataframe(df.head(10))
     
     st.markdown("### Column Descriptions")
